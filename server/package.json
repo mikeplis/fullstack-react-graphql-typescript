@@ -27,6 +27,7 @@
         "graphql": "^15.5.0",
         "nodemon": "^2.0.7",
         "pg": "^8.6.0",
+        "reflect-metadata": "^0.1.13",
         "type-graphql": "^1.1.1"
     },
     "mikro-orm": {
