@@ -1,4 +1,4 @@
-import 'reflect-metadata'
+import "reflect-metadata";
 import { MikroORM } from "@mikro-orm/core";
 import { __prod__ } from "./constants";
 import mikroConfig from "./mikro-orm.config";
@@ -7,6 +7,7 @@ import { ApolloServer } from "apollo-server-express";
 import { buildSchema } from "type-graphql";
 import { HelloResolver } from "./resolvers/hello";
 import { PostResolver } from "./resolvers/postResolver";
+import { UserResolver } from "./resolvers/userResolver";
 
 const main = async () => {
     const orm = await MikroORM.init(mikroConfig);
@@ -17,14 +18,14 @@ const main = async () => {
 
     const apolloServer = new ApolloServer({
         schema: await buildSchema({
-            resolvers: [HelloResolver, PostResolver],
+            resolvers: [HelloResolver, PostResolver, UserResolver],
             // don't like the default validator that type-graphql uses
             validate: false,
         }),
         context: () => ({ em: orm.em }),
     });
 
-    app.get("/", (req, res) => {
+    app.get("/", (_, res) => {
         res.send("hello");
     });
 
