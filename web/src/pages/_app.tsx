@@ -4,7 +4,13 @@ import theme from "../theme";
 import { AppProps } from "next/app";
 import { createClient, dedupExchange, fetchExchange, Provider } from "urql";
 import { cacheExchange, QueryInput, Cache } from "@urql/exchange-graphcache";
-import { LoginMutation, MeDocument, MeQuery, RegisterMutation } from "../generated/graphql";
+import {
+    LoginMutation,
+    LogoutMutation,
+    MeDocument,
+    MeQuery,
+    RegisterMutation,
+} from "../generated/graphql";
 
 // wrapper function around updateQuery to have better types
 function betterUpdateQuer<Result, Query>(
@@ -22,6 +28,9 @@ const client = createClient({
         // ensures that cookie is sent
         credentials: "include",
     },
+    // If this was my project, I'd probably turn this on so I don't have to deal with caches
+    // at all. For now, I'll leave the default so I can learn along with the video
+    // requestPolicy: 'network-only',
     exchanges: [
         dedupExchange,
         cacheExchange({
@@ -31,11 +40,11 @@ const client = createClient({
                     // honestly not convinced this is necessary - I feel like there's a better way,
                     // but this is what he did in the video
                     // could maybe just refetch query or invalidate cache or something
-                    login: (_result, args, cache, info) => {
+                    login: (result_, _args, cache, _info) => {
                         betterUpdateQuer<LoginMutation, MeQuery>(
                             cache,
                             { query: MeDocument },
-                            _result,
+                            result_,
                             (result, query) => {
                                 if (result.login.errors) {
                                     return query;
@@ -47,11 +56,11 @@ const client = createClient({
                             }
                         );
                     },
-                    register: (_result, args, cache, info) => {
+                    register: (result_, _args, cache, _info) => {
                         betterUpdateQuer<RegisterMutation, MeQuery>(
                             cache,
                             { query: MeDocument },
-                            _result,
+                            result_,
                             (result, query) => {
                                 if (result.register.errors) {
                                     return query;
@@ -61,6 +70,14 @@ const client = createClient({
                                     };
                                 }
                             }
+                        );
+                    },
+                    logout: (result_, _args, cache, _info) => {
+                        betterUpdateQuer<LogoutMutation, MeQuery>(
+                            cache,
+                            { query: MeDocument },
+                            result_,
+                            () => ({ me: null })
                         );
                     },
                 },

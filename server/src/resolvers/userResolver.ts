@@ -2,6 +2,7 @@ import { Arg, Ctx, Field, InputType, Mutation, ObjectType, Query, Resolver } fro
 import { User } from "../entities/User";
 import { MyContext } from "../types";
 import argon2 from "argon2";
+import { COOKIE_NAME } from "../constants";
 
 @InputType()
 class UsernamePasswordInput {
@@ -76,7 +77,6 @@ export class UserResolver {
                     errors: [{ field: "username", message: "username already taken" }],
                 };
             }
-            console.log("message", error.message);
         }
 
         // store user id session
@@ -112,5 +112,21 @@ export class UserResolver {
         return {
             user,
         };
+    }
+
+    @Mutation(() => Boolean)
+    async logout(@Ctx() { req, res }: MyContext): Promise<Boolean> {
+        return new Promise((resolve) =>
+            req.session.destroy((err) => {
+                // clear cookie even if session isn't destroyed
+                res.clearCookie(COOKIE_NAME);
+                if (err) {
+                    console.log(err);
+                    resolve(false);
+                } else {
+                    resolve(true);
+                }
+            })
+        );
     }
 }
