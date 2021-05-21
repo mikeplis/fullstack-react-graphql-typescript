@@ -4,25 +4,27 @@ import { useRouter } from "next/router";
 import React from "react";
 import { InputField } from "../components/InputField";
 import { Wrapper } from "../components/Wrapper";
-import { useRegisterMutation } from "../generated/graphql";
+import { useLoginMutation } from "../generated/graphql";
 import { toErrorMap } from "../utils/toErrorMap";
 
 // TODO: replace with react-hook-form
-const Register = () => {
+const Login = () => {
     const router = useRouter();
-    const [, register] = useRegisterMutation();
+    const [, register] = useLoginMutation();
     return (
         <Wrapper>
             <Formik
                 initialValues={{ username: "", password: "" }}
                 onSubmit={async (values, { setErrors }) => {
                     const response = await register({
-                        username: values.username,
-                        password: values.password,
+                        options: {
+                            username: values.username,
+                            password: values.password,
+                        },
                     });
-                    if (response.data?.register.errors) {
-                        setErrors(toErrorMap(response.data.register.errors));
-                    } else if (response.data?.register.user) {
+                    if (response.data?.login.errors) {
+                        setErrors(toErrorMap(response.data.login.errors));
+                    } else if (response.data?.login.user) {
                         router.push("/");
                     }
                 }}
@@ -40,7 +42,7 @@ const Register = () => {
                             />
 
                             <Button type="submit" colorScheme="teal" isLoading={isSubmitting}>
-                                Register
+                                Login
                             </Button>
                         </Stack>
                     </Form>
@@ -50,4 +52,4 @@ const Register = () => {
     );
 };
 
-export default Register;
+export default Login;
