@@ -1,9 +1,11 @@
 import { Entity, PrimaryKey, Property } from "@mikro-orm/core";
 import { Field, ObjectType } from "type-graphql";
 
+// named AppUser instead of User so it doesn't conflict with postgresql reserved word "user"
+// https://stackoverflow.com/questions/22256124/cannot-create-a-database-table-named-user-in-postgresql
 @Entity()
 @ObjectType()
-export class User {
+export class AppUser {
     @PrimaryKey()
     @Field()
     id!: number;
@@ -11,6 +13,10 @@ export class User {
     @Property({ type: "text", unique: true })
     @Field()
     username!: string;
+
+    @Property({ type: "text", unique: true })
+    @Field()
+    email!: string;
 
     @Property({ type: "text" })
     password!: string;

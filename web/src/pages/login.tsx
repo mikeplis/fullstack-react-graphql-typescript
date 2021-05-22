@@ -1,4 +1,4 @@
-import { Stack, Button } from "@chakra-ui/react";
+import { Stack, Button, Link } from "@chakra-ui/react";
 import { Form, Formik } from "formik";
 import { withUrqlClient } from "next-urql";
 import { useRouter } from "next/router";
@@ -8,22 +8,18 @@ import { Wrapper } from "../components/Wrapper";
 import { useLoginMutation } from "../generated/graphql";
 import { createUrqlClient } from "../utils/createUrqlClient";
 import { toErrorMap } from "../utils/toErrorMap";
+import NextLink from "next/link";
 
 // TODO: replace with react-hook-form
 const Login = () => {
     const router = useRouter();
-    const [, register] = useLoginMutation();
+    const [, login] = useLoginMutation();
     return (
         <Wrapper>
             <Formik
-                initialValues={{ username: "", password: "" }}
+                initialValues={{ usernameOrEmail: "", password: "" }}
                 onSubmit={async (values, { setErrors }) => {
-                    const response = await register({
-                        options: {
-                            username: values.username,
-                            password: values.password,
-                        },
-                    });
+                    const response = await login(values);
                     if (response.data?.login.errors) {
                         setErrors(toErrorMap(response.data.login.errors));
                     } else if (response.data?.login.user) {
@@ -34,7 +30,11 @@ const Login = () => {
                 {({ isSubmitting }) => (
                     <Form>
                         <Stack>
-                            <InputField name="username" placeholder="Username" label="Username" />
+                            <InputField
+                                name="usernameOrEmail"
+                                placeholder="Username or Email"
+                                label="Username or Email"
+                            />
 
                             <InputField
                                 name="password"
@@ -42,6 +42,10 @@ const Login = () => {
                                 label="Password"
                                 type="password"
                             />
+
+                            <NextLink href="/forgot-password">
+                                <Link>Forget password?</Link>
+                            </NextLink>
 
                             <Button type="submit" colorScheme="teal" isLoading={isSubmitting}>
                                 Login

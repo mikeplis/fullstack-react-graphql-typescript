@@ -9,7 +9,7 @@ import { HelloResolver } from "./resolvers/hello";
 import { PostResolver } from "./resolvers/postResolver";
 import { UserResolver } from "./resolvers/userResolver";
 
-import redis from "redis";
+import Redis from "ioredis";
 import session from "express-session";
 import connectRedis from "connect-redis";
 import cors from "cors";
@@ -22,7 +22,7 @@ const main = async () => {
     const app = express();
 
     const RedisStore = connectRedis(session);
-    const redisClient = redis.createClient();
+    const redis = new Redis();
 
     app.use(
         cors({
@@ -37,7 +37,7 @@ const main = async () => {
     app.use(
         session({
             name: COOKIE_NAME,
-            store: new RedisStore({ client: redisClient, disableTouch: true, disableTTL: true }),
+            store: new RedisStore({ client: redis, disableTouch: true, disableTTL: true }),
             cookie: {
                 maxAge: 1000 * 60 * 60 * 24 * 365 * 10, // 10 years
                 httpOnly: true,
@@ -57,7 +57,7 @@ const main = async () => {
             // don't like the default validator that type-graphql uses
             validate: false,
         }),
-        context: ({ req, res }) => ({ em: orm.em, req, res }),
+        context: ({ req, res }) => ({ em: orm.em, req, res, redis }),
     });
 
     app.get("/", (_, res) => {

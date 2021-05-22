@@ -2,10 +2,10 @@ import { __prod__ } from "./constants";
 import { Post } from "./entities/Post";
 import { MikroORM } from "@mikro-orm/core";
 import path from "path";
-import { User } from "./entities/User";
+import { AppUser } from "./entities/AppUser";
 
 const config = {
-    entities: [Post, User],
+    entities: [Post, AppUser],
     dbName: "lireddit",
     type: "postgresql",
     debug: !__prod__,

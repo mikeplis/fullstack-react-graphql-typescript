@@ -16,11 +16,10 @@ const Register = () => {
     return (
         <Wrapper>
             <Formik
-                initialValues={{ username: "", password: "" }}
+                initialValues={{ username: "", password: "", email: "" }}
                 onSubmit={async (values, { setErrors }) => {
                     const response = await register({
-                        username: values.username,
-                        password: values.password,
+                        options: values,
                     });
                     if (response.data?.register.errors) {
                         setErrors(toErrorMap(response.data.register.errors));
@@ -33,6 +32,7 @@ const Register = () => {
                     <Form>
                         <Stack>
                             <InputField name="username" placeholder="Username" label="Username" />
+                            <InputField name="email" placeholder="Email" label="Email" />
 
                             <InputField
                                 name="password"
