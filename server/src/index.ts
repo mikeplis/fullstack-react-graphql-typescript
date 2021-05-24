@@ -1,23 +1,30 @@
 import "reflect-metadata";
-import { MikroORM } from "@mikro-orm/core";
 import { COOKIE_NAME, __prod__ } from "./constants";
-import mikroConfig from "./mikro-orm.config";
 import express from "express";
 import { ApolloServer } from "apollo-server-express";
 import { buildSchema } from "type-graphql";
 import { HelloResolver } from "./resolvers/hello";
 import { PostResolver } from "./resolvers/postResolver";
 import { UserResolver } from "./resolvers/userResolver";
+import { createConnection } from "typeorm";
 
 import Redis from "ioredis";
 import session from "express-session";
 import connectRedis from "connect-redis";
 import cors from "cors";
+import { Post } from "./entities/Post";
+import { AppUser } from "./entities/AppUser";
 
 const main = async () => {
-    const orm = await MikroORM.init(mikroConfig);
-
-    await orm.getMigrator().up();
+    await createConnection({
+        type: "postgres",
+        database: "lireddit2",
+        username: "postgres",
+        password: "postgres",
+        logging: true,
+        synchronize: true,
+        entities: [Post, AppUser],
+    });
 
     const app = express();
 
@@ -57,7 +64,7 @@ const main = async () => {
             // don't like the default validator that type-graphql uses
             validate: false,
         }),
-        context: ({ req, res }) => ({ em: orm.em, req, res, redis }),
+        context: ({ req, res }) => ({ req, res, redis }),
     });
 
     app.get("/", (_, res) => {

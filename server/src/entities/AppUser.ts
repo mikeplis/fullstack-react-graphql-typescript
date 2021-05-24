@@ -1,32 +1,38 @@
-import { Entity, PrimaryKey, Property } from "@mikro-orm/core";
 import { Field, ObjectType } from "type-graphql";
+import {
+    BaseEntity,
+    Column,
+    CreateDateColumn,
+    Entity,
+    PrimaryGeneratedColumn,
+    UpdateDateColumn,
+} from "typeorm";
 
 // named AppUser instead of User so it doesn't conflict with postgresql reserved word "user"
 // https://stackoverflow.com/questions/22256124/cannot-create-a-database-table-named-user-in-postgresql
 @Entity()
 @ObjectType()
-export class AppUser {
-    @PrimaryKey()
+export class AppUser extends BaseEntity {
+    @PrimaryGeneratedColumn()
     @Field()
     id!: number;
 
-    @Property({ type: "text", unique: true })
+    @Column({ unique: true })
     @Field()
     username!: string;
 
-    @Property({ type: "text", unique: true })
+    @Column({ unique: true })
     @Field()
     email!: string;
 
-    @Property({ type: "text" })
+    @Column()
     password!: string;
 
-
-    @Property({ type: "date" })
+    @CreateDateColumn()
     @Field(() => String)
-    createdAt = new Date();
+    createdAt: Date;
 
-    @Property({ type: "date", onUpdate: () => new Date() })
+    @UpdateDateColumn()
     @Field(() => String)
-    updatedAt = new Date();
+    updatedAt: Date;
 }
