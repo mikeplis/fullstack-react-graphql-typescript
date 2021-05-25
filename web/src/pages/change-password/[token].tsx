@@ -1,6 +1,5 @@
 import { Box, Button, Link, Stack } from "@chakra-ui/react";
 import { Formik, Form } from "formik";
-import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import { withUrqlClient } from "next-urql";
 import { useRouter } from "next/router";
 import React from "react";
@@ -11,11 +10,10 @@ import { createUrqlClient } from "../../utils/createUrqlClient";
 import { toErrorMap } from "../../utils/toErrorMap";
 import NextLink from "next/link";
 
-// getting these types to work was NOT simple
-// https://github.com/vercel/next.js/issues/15913
-const ChangePassword = ({ token }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
+const ChangePassword = () => {
     const [, changePassword] = useChangePasswordMutation();
     const router = useRouter();
+
     const [tokenError, setTokenError] = React.useState("");
     return (
         <Wrapper>
@@ -24,7 +22,7 @@ const ChangePassword = ({ token }: InferGetServerSidePropsType<typeof getServerS
                 onSubmit={async (values, { setErrors }) => {
                     const response = await changePassword({
                         newPassword: values.newPassword,
-                        token,
+                        token: typeof router.query.token === "string" ? router.query.token : "",
                     });
                     if (response.data?.changePassword.errors) {
                         const errorMap = toErrorMap(response.data.changePassword.errors);
@@ -65,12 +63,6 @@ const ChangePassword = ({ token }: InferGetServerSidePropsType<typeof getServerS
             </Formik>
         </Wrapper>
     );
-};
-
-export const getServerSideProps = async (context: GetServerSidePropsContext) => {
-    return {
-        props: { token: context?.params?.token as string },
-    };
 };
 
 // urql types seem wrong. hopefully we can just ignore

@@ -1,7 +1,7 @@
 import { Box } from "@chakra-ui/react";
 import React from "react";
 
-type Props = {
+export type Props = {
     children: React.ReactNode;
     variant?: "small" | "regular";
 };

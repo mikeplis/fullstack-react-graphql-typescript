@@ -1,4 +1,4 @@
-import { dedupExchange, fetchExchange } from "urql";
+import { dedupExchange, Exchange, fetchExchange } from "urql";
 import { cacheExchange } from "@urql/exchange-graphcache";
 import {
     LoginMutation,
@@ -8,6 +8,24 @@ import {
     RegisterMutation,
 } from "../generated/graphql";
 import { betterUpdateQuery } from "./betterUpdateQuery";
+import { pipe, tap } from "wonka";
+import Router from "next/router";
+
+const errorExchange: Exchange =
+    ({ forward }) =>
+    (ops$) => {
+        return pipe(
+            forward(ops$),
+            tap(({ error }) => {
+                // redirect user to login page whenever we see a "not authenticated" error
+                // FWIW, I don't love this logic being here. Devs would need to know this is here
+                // and nothing really prevents components from handling this differently
+                if (error?.message.includes("not authenticated")) {
+                    Router.replace("/login");
+                }
+            })
+        );
+    };
 
 export const createUrqlClient = (ssrExchange: any) => {
     return {
@@ -71,6 +89,7 @@ export const createUrqlClient = (ssrExchange: any) => {
                     },
                 },
             }),
+            errorExchange,
             ssrExchange,
             fetchExchange,
         ],

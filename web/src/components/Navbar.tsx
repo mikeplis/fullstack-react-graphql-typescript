@@ -47,7 +47,7 @@ export const Navbar = () => {
     }
 
     return (
-        <Flex bgColor="tan" p={4} justifyContent="flex-end">
+        <Flex position="sticky" top="0" zIndex={1} bgColor="tan" p={4} justifyContent="flex-end">
             {body}
         </Flex>
     );
