@@ -4,11 +4,16 @@ import {
     ArgsType,
     Ctx,
     Field,
+    FieldResolver,
+    Int,
     Mutation,
+    ObjectType,
     Query,
     Resolver,
+    Root,
     UseMiddleware,
 } from "type-graphql";
+import { getConnection } from "typeorm";
 import { Post } from "../entities/Post";
 import { isAuth } from "../middleware/isAuth";
 import { MyContext } from "../types";
@@ -22,11 +27,46 @@ class PostInput {
     text!: string;
 }
 
-@Resolver()
+@ObjectType()
+class PaginatedPosts {
+    @Field(() => [Post])
+    posts: Post[];
+
+    @Field()
+    hasMore: boolean;
+}
+
+@Resolver(Post)
 export class PostResolver {
-    @Query(() => [Post])
-    posts(): Promise<Post[]> {
-        return Post.find();
+    // TODO: probably prefer to add an argument to the `text` field rather than a new field here
+    @FieldResolver(() => String)
+    textSnippet(@Root() root: Post) {
+        return root.text.slice(0, 50);
+    }
+
+    @Query(() => PaginatedPosts)
+    async posts(
+        @Arg("limit", () => Int) limit: number,
+        @Arg("cursor", () => String, { nullable: true }) cursor: string | null
+    ): Promise<PaginatedPosts> {
+        // cap the limit at 50 - keep the cap hidden from users
+        const realLimit = Math.min(50, limit);
+        // fetch one additional item to check if more items exist
+        const realLimitPlusOne = realLimit + 1;
+        const query = getConnection()
+            .getRepository(Post)
+            .createQueryBuilder("p")
+            // need double quotes or else column name will be converted to lowercase
+            .orderBy('"createdAt"', "DESC")
+            .take(realLimitPlusOne);
+
+        if (cursor) {
+            query.where('"createdAt" < :cursor', { cursor: new Date(parseInt(cursor)) });
+        }
+
+        const posts = await query.getMany();
+
+        return { posts: posts.slice(0, realLimit), hasMore: posts.length === realLimitPlusOne };
     }
 
     @Query(() => Post, { nullable: true })
