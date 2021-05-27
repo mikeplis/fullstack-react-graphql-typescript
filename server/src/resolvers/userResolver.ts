@@ -1,4 +1,14 @@
-import { Arg, Ctx, Field, Mutation, ObjectType, Query, Resolver } from "type-graphql";
+import {
+    Arg,
+    Ctx,
+    Field,
+    FieldResolver,
+    Mutation,
+    ObjectType,
+    Query,
+    Resolver,
+    Root,
+} from "type-graphql";
 import { AppUser } from "../entities/AppUser";
 import { MyContext } from "../types";
 import argon2 from "argon2";
@@ -27,8 +37,18 @@ class UserResponse {
     user?: AppUser;
 }
 
-@Resolver()
+@Resolver(AppUser)
 export class UserResolver {
+    @FieldResolver(() => String)
+    email(@Root() user: AppUser, @Ctx() { req }: MyContext) {
+        // this is the current user so we can return email
+        if (req.session.userId === user.id) {
+            return user.email;
+        }
+        // current user wants to see another user's email
+        return "";
+    }
+
     @Mutation(() => UserResponse)
     async changePassword(
         @Arg("token") token: string,

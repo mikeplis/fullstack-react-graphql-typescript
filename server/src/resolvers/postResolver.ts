@@ -56,12 +56,14 @@ export class PostResolver {
         const query = getConnection()
             .getRepository(Post)
             .createQueryBuilder("p")
+            // need to specify relation since we're using query builder
+            .innerJoinAndSelect("p.creator", "u", 'u.id = p."creatorId"')
             // need double quotes or else column name will be converted to lowercase
-            .orderBy('"createdAt"', "DESC")
+            .orderBy('p.createdAt', "DESC")
             .take(realLimitPlusOne);
 
         if (cursor) {
-            query.where('"createdAt" < :cursor', { cursor: new Date(parseInt(cursor)) });
+            query.where('p."createdAt" < :cursor', { cursor: new Date(parseInt(cursor)) });
         }
 
         const posts = await query.getMany();
