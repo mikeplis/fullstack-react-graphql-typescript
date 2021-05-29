@@ -1,4 +1,4 @@
-import { Box, Button, Flex, HStack, Link } from "@chakra-ui/react";
+import { Box, Button, Flex, Heading, HStack, Link } from "@chakra-ui/react";
 import React from "react";
 import NextLink from "next/link";
 import { useLogoutMutation, useMeQuery } from "../generated/graphql";
@@ -31,7 +31,13 @@ export const Navbar = () => {
         body = (
             <HStack spacing={4}>
                 <Box>{data.me.username}</Box>
+                <NextLink href="/create-post">
+                    <Button colorScheme="cyan" variant="solid" as={Link}>
+                        Create post
+                    </Button>
+                </NextLink>
                 <Button
+                    colorScheme="cyan"
                     variant="link"
                     onClick={() => {
                         logout();
@@ -45,8 +51,15 @@ export const Navbar = () => {
     }
 
     return (
-        <Flex position="sticky" top="0" zIndex={1} bgColor="tan" p={4} justifyContent="flex-end">
-            {body}
-        </Flex>
+        <Box position="sticky" top="0" zIndex={1} bgColor="cyan.200" p={4}>
+            <Flex mx="auto" maxW="container.lg" justifyContent="space-between">
+                <NextLink href="/">
+                    <Link>
+                        <Heading>LiReddit</Heading>
+                    </Link>
+                </NextLink>
+                {body}
+            </Flex>
+        </Box>
     );
 };

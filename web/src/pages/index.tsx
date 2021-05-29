@@ -32,12 +32,6 @@ const Index = () => {
 
     return (
         <Layout>
-            <Flex mb={4} alignItems="center" justifyContent="space-between">
-                <Heading>LiReddit</Heading>
-                <NextLink href="/create-post">
-                    <Link>Create post</Link>
-                </NextLink>
-            </Flex>
             {!data && fetching ? (
                 <Box>Loading...</Box>
             ) : (
@@ -73,7 +67,9 @@ const Index = () => {
                                 </Stack>
 
                                 <Stack>
-                                    <Heading fontSize="xl">{post.title}</Heading>
+                                    <NextLink href={`/post/${post.id}`}>
+                                        <Link fontSize="xl">{post.title}</Link>
+                                    </NextLink>
                                     <Text fontSize="xs">posted by {post.creator.username}</Text>
                                     <Text mt={4}>{post.textSnippet}</Text>
                                 </Stack>
