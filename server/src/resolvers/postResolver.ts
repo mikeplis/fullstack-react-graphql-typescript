@@ -135,8 +135,6 @@ export class PostResolver {
 
     @FieldResolver(() => Int, { nullable: true })
     async voteStatus(@Root() post: Post, @Ctx() { req }: MyContext) {
-        console.log("voteStatus", { userId: req.session.userId });
-
         if (!req.session.userId) {
             return null;
         }
@@ -148,14 +146,12 @@ export class PostResolver {
             },
         });
 
-        console.log("voteStatus", { userId: req.session.userId, upvote });
-
         return upvote ? upvote.value : null;
     }
 
     @Query(() => Post, { nullable: true })
     post(@Arg("id", () => Int) id: number): Promise<Post | undefined> {
-        return Post.findOne(id, {relations: ['creator']});
+        return Post.findOne(id, { relations: ["creator"] });
     }
 
     @Mutation(() => Post)
@@ -180,8 +176,24 @@ export class PostResolver {
     }
 
     @Mutation(() => Boolean)
-    async deletePost(@Arg("id") id: number): Promise<Boolean> {
-        await Post.delete(id);
+    @UseMiddleware(isAuth)
+    async deletePost(
+        @Arg("id", () => Int) id: number,
+        @Ctx() { req }: MyContext
+    ): Promise<Boolean> {
+        // not cascade
+        // const post = await Post.findOne(id);
+        // if (!post) {
+        //     return false;
+        // }
+        // if (post.creatorId !== req.session.userId) {
+        //     throw new Error("not authorized");
+        // }
+
+        // await Upvote.delete({ postId: id });
+        // await Post.delete({ id, creatorId: req.session.userId });
+
+        await Post.delete({ id, creatorId: req.session.userId });
         return true;
     }
 }
