@@ -15,6 +15,7 @@ import {
 } from "type-graphql";
 import { getConnection } from "typeorm";
 import { Post } from "../entities/Post";
+import { Upvote } from "../entities/Upvote";
 import { isAuth } from "../middleware/isAuth";
 import { MyContext } from "../types";
 
@@ -38,6 +39,67 @@ class PaginatedPosts {
 
 @Resolver(Post)
 export class PostResolver {
+    // This could go in its own resolver but that's not really necessary
+    @Mutation(() => Boolean)
+    @UseMiddleware(isAuth)
+    async vote(
+        @Arg("postId", () => Int) postId: number,
+        @Arg("value", () => Int) value: number,
+        @Ctx() { req }: MyContext
+    ) {
+        const { userId } = req.session;
+        const isUpvote = value !== -1;
+        const realValue = isUpvote ? 1 : -1;
+
+        const upvote = await Upvote.findOne({ where: { postId, userId } });
+
+        if (upvote && upvote.value !== realValue) {
+            // user voted before but is changing their vote
+            await getConnection().transaction(async (transactionManager) => {
+                await transactionManager.query(
+                    `
+                    update upvote
+                    set value = $1
+                    where "postId" = $2 and "userId" = $3;
+                    `,
+                    [realValue, postId, userId]
+                );
+
+                await transactionManager.query(
+                    `
+                    update post
+                    set points = points + $1
+                    where id = $2;
+                    `,
+                    // multiply realValue by two since user is replacing a previous vote with the opposite vote
+                    [2 * realValue, postId]
+                );
+            });
+        } else if (!upvote) {
+            // user has not voted before
+            await getConnection().transaction(async (transactionManager) => {
+                await transactionManager.query(
+                    `
+                    insert into upvote ("userId", "postId", value)
+                    values ($1, $2, $3);
+                    `,
+                    [userId, postId, realValue]
+                );
+
+                await transactionManager.query(
+                    `
+                    update post
+                    set points = points + $1
+                    where id = $2;
+                    `,
+                    [realValue, postId]
+                );
+            });
+        }
+
+        return true;
+    }
+
     // TODO: probably prefer to add an argument to the `text` field rather than a new field here
     @FieldResolver(() => String)
     textSnippet(@Root() root: Post) {
@@ -59,7 +121,7 @@ export class PostResolver {
             // need to specify relation since we're using query builder
             .innerJoinAndSelect("p.creator", "u", 'u.id = p."creatorId"')
             // need double quotes or else column name will be converted to lowercase
-            .orderBy('p.createdAt', "DESC")
+            .orderBy("p.createdAt", "DESC")
             .take(realLimitPlusOne);
 
         if (cursor) {
@@ -69,6 +131,26 @@ export class PostResolver {
         const posts = await query.getMany();
 
         return { posts: posts.slice(0, realLimit), hasMore: posts.length === realLimitPlusOne };
+    }
+
+    @FieldResolver(() => Int, { nullable: true })
+    async voteStatus(@Root() post: Post, @Ctx() { req }: MyContext) {
+        console.log("voteStatus", { userId: req.session.userId });
+
+        if (!req.session.userId) {
+            return null;
+        }
+
+        const upvote = await Upvote.findOne({
+            where: {
+                postId: post.id,
+                userId: req.session.userId,
+            },
+        });
+
+        console.log("voteStatus", { userId: req.session.userId, upvote });
+
+        return upvote ? upvote.value : null;
     }
 
     @Query(() => Post, { nullable: true })

@@ -6,9 +6,7 @@ import { isServer } from "../utils/isServer";
 
 export const Navbar = () => {
     const [{ data, fetching }] = useMeQuery({
-        // our nextjs server isn't set up to use cookies, so when this query runs on the server
-        // (which it will because we use the Navbar on the index page which is SSR), the result
-        // is always null. since user-specific info is not needed for SEO, we can skip this
+        // since user-specific info is not needed for SEO, we can skip this
         // query on the server
         pause: isServer(),
     });

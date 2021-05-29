@@ -12,8 +12,6 @@ import Redis from "ioredis";
 import session from "express-session";
 import connectRedis from "connect-redis";
 import cors from "cors";
-import { Post } from "./entities/Post";
-import { AppUser } from "./entities/AppUser";
 import path from "path";
 
 const main = async () => {
@@ -25,7 +23,7 @@ const main = async () => {
         logging: true,
         synchronize: true,
         migrations: [path.join(__dirname, "./migrations/*")],
-        entities: [Post, AppUser],
+        entities: [path.join(__dirname, "./entities/*")],
     });
 
     await conn.runMigrations();

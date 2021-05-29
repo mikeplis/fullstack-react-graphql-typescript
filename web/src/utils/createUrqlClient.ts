@@ -1,17 +1,19 @@
-import { dedupExchange, Exchange, fetchExchange } from "urql";
-import { cacheExchange, Resolver } from "@urql/exchange-graphcache";
+import { dedupExchange, Exchange, fetchExchange, gql } from "urql";
+import { cacheExchange, Resolver, Cache } from "@urql/exchange-graphcache";
 import {
     LoginMutation,
     LogoutMutation,
     MeDocument,
     MeQuery,
     RegisterMutation,
+    VoteMutationVariables,
 } from "../generated/graphql";
 import { betterUpdateQuery } from "./betterUpdateQuery";
 import { pipe, tap } from "wonka";
 import Router from "next/router";
 
-import { stringifyVariables } from "@urql/core";
+import { ClientOptions, stringifyVariables } from "@urql/core";
+import { isServer } from "./isServer";
 
 // We need to do something to tell urql that repeated queries to this field should
 // be combined into a single result set in the local cache.
@@ -67,12 +69,25 @@ const errorExchange: Exchange =
         );
     };
 
-export const createUrqlClient = (ssrExchange: any) => {
+function invalidateAllPosts(cache: Cache) {
+    const allFields = cache.inspectFields("Query");
+    const fieldInfos = allFields.filter((info) => info.fieldName === "posts");
+    fieldInfos.forEach((fi) => {
+        cache.invalidate("Query", "posts", fi.arguments || {});
+    });
+}
+
+export const createUrqlClient = (ssrExchange: any, ctx: any): ClientOptions => {
+    let cookie = "";
+    if (isServer()) {
+        cookie = ctx?.req?.headers?.cookie;
+    }
+
     return {
         url: "http://localhost:4001/graphql",
         fetchOptions: {
-            // ensures that cookie is sent
             credentials: "include" as const,
+            headers: cookie ? { cookie } : undefined,
         },
         // If this was my project, I'd probably turn this on so I don't have to deal with caches
         // at all. For now, I'll leave the default so I can learn along with the video
@@ -90,6 +105,39 @@ export const createUrqlClient = (ssrExchange: any) => {
                 },
                 updates: {
                     Mutation: {
+                        vote: (_result, args, cache, info) => {
+                            const { postId, value } = args as VoteMutationVariables;
+                            const data = cache.readFragment(
+                                gql`
+                                    fragment _ on Post {
+                                        id
+                                        points
+                                        voteStatus
+                                    }
+                                `,
+                                { id: postId } as any
+                            );
+
+                            if (data) {
+                                if (data.voteStatus === value) {
+                                    return;
+                                }
+                                const newPoints =
+                                    (data.points as number) + (!data.voteStatus ? 1 : 2) * value;
+                                cache.writeFragment(
+                                    gql`
+                                        fragment __ on Post {
+                                            points
+                                            voteStatus
+                                        }
+                                    `,
+                                    { id: postId, points: newPoints, voteStatus: value } as any
+                                );
+                            }
+                        },
+                        createPost: (_result, _args, cache, _info) => {
+                            invalidateAllPosts(cache);
+                        },
                         // updates the cache whenever these mutations runs
                         // honestly not convinced this is necessary - I feel like there's a better way,
                         // but this is what he did in the video

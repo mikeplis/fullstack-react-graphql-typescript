@@ -9,6 +9,7 @@ import {
     UpdateDateColumn,
 } from "typeorm";
 import { Post } from "./Post";
+import { Upvote } from "./Upvote";
 
 // named AppUser instead of User so it doesn't conflict with postgresql reserved word "user"
 // https://stackoverflow.com/questions/22256124/cannot-create-a-database-table-named-user-in-postgresql
@@ -32,6 +33,9 @@ export class AppUser extends BaseEntity {
 
     @OneToMany(() => Post, post => post.creator)
     posts: Post[];
+
+    @OneToMany(() => Upvote, upvote => upvote.user)
+    upvotes: Upvote[];
 
     @CreateDateColumn()
     @Field(() => String)
