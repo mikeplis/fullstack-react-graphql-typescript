@@ -14,6 +14,7 @@ import {
     UseMiddleware,
 } from "type-graphql";
 import { getConnection } from "typeorm";
+import { AppUser } from "../entities/AppUser";
 import { Post } from "../entities/Post";
 import { Upvote } from "../entities/Upvote";
 import { isAuth } from "../middleware/isAuth";
@@ -106,6 +107,11 @@ export class PostResolver {
         return root.text.slice(0, 50);
     }
 
+    @FieldResolver(() => AppUser)
+    creator(@Root() root: Post, @Ctx() { userLoader }: MyContext) {
+        return userLoader.load(root.creatorId);
+    }
+
     @Query(() => PaginatedPosts)
     async posts(
         @Arg("limit", () => Int) limit: number,
@@ -118,8 +124,6 @@ export class PostResolver {
         const query = getConnection()
             .getRepository(Post)
             .createQueryBuilder("p")
-            // need to specify relation since we're using query builder
-            .innerJoinAndSelect("p.creator", "u", 'u.id = p."creatorId"')
             // need double quotes or else column name will be converted to lowercase
             .orderBy("p.createdAt", "DESC")
             .take(realLimitPlusOne);
@@ -134,16 +138,14 @@ export class PostResolver {
     }
 
     @FieldResolver(() => Int, { nullable: true })
-    async voteStatus(@Root() post: Post, @Ctx() { req }: MyContext) {
+    async voteStatus(@Root() post: Post, @Ctx() { req, upvoteLoader }: MyContext) {
         if (!req.session.userId) {
             return null;
         }
 
-        const upvote = await Upvote.findOne({
-            where: {
-                postId: post.id,
-                userId: req.session.userId,
-            },
+        const upvote = await upvoteLoader.load({
+            postId: post.id,
+            userId: req.session.userId,
         });
 
         return upvote ? upvote.value : null;
