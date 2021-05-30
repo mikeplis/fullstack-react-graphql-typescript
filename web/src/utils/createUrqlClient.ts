@@ -164,6 +164,7 @@ export const createUrqlClient = (ssrExchange: any, ctx: any): ClientOptions => {
                                     }
                                 }
                             );
+                            invalidateAllPosts(cache);
                         },
                         register: (result_, _args, cache, _info) => {
                             betterUpdateQuery<RegisterMutation, MeQuery>(

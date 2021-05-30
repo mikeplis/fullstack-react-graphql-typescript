@@ -3,8 +3,10 @@ import React from "react";
 import NextLink from "next/link";
 import { useLogoutMutation, useMeQuery } from "../generated/graphql";
 import { isServer } from "../utils/isServer";
+import { useRouter } from "next/router";
 
 export const Navbar = () => {
+    const router = useRouter();
     const [{ data, fetching }] = useMeQuery({
         // since user-specific info is not needed for SEO, we can skip this
         // query on the server
@@ -39,8 +41,9 @@ export const Navbar = () => {
                 <Button
                     colorScheme="cyan"
                     variant="link"
-                    onClick={() => {
-                        logout();
+                    onClick={async () => {
+                        await logout();
+                        router.reload();
                     }}
                     isLoading={logoutFetching}
                 >
