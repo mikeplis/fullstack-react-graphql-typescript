@@ -65,6 +65,4 @@ const ChangePassword = () => {
     );
 };
 
-// urql types seem wrong. hopefully we can just ignore
-// @ts-ignore
 export default withUrqlClient(createUrqlClient)(ChangePassword);

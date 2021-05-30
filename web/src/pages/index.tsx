@@ -1,10 +1,15 @@
-import { ChevronDownIcon, ChevronUpIcon, DeleteIcon } from "@chakra-ui/icons";
+import { ChevronDownIcon, ChevronUpIcon, DeleteIcon, EditIcon } from "@chakra-ui/icons";
 import { Box, Link, Text, Stack, Button, IconButton, HStack, Flex } from "@chakra-ui/react";
 import { withUrqlClient } from "next-urql";
 import NextLink from "next/link";
 import React from "react";
 import { Layout } from "../components/Layout";
-import { useDeletePostMutation, usePostsQuery, useVoteMutation } from "../generated/graphql";
+import {
+    useDeletePostMutation,
+    useMeQuery,
+    usePostsQuery,
+    useVoteMutation,
+} from "../generated/graphql";
 import { createUrqlClient } from "../utils/createUrqlClient";
 
 const Index = () => {
@@ -13,6 +18,7 @@ const Index = () => {
         cursor: null,
     });
     const [{ data, fetching }] = usePostsQuery({ variables });
+    const [{ data: meData }] = useMeQuery();
     const [, vote] = useVoteMutation();
     const [, deletePost] = useDeletePostMutation();
 
@@ -75,15 +81,26 @@ const Index = () => {
                                         <Text mt={4}>{post.textSnippet}</Text>
                                     </Stack>
                                 </HStack>
-                                <IconButton
-                                    size="xs"
-                                    aria-label="delete post"
-                                    icon={<DeleteIcon />}
-                                    onClick={() => {
-                                        deletePost({ id: post.id });
-                                    }}
-                                    colorScheme="pink"
-                                />
+                                {meData?.me?.id === post.creator.id ? (
+                                    <HStack>
+                                        <NextLink href={`/post/edit/${post.id}`}>
+                                            <IconButton
+                                                as={Link}
+                                                size="xs"
+                                                aria-label="edit post"
+                                                icon={<EditIcon />}
+                                            />
+                                        </NextLink>
+                                        <IconButton
+                                            size="xs"
+                                            aria-label="delete post"
+                                            icon={<DeleteIcon />}
+                                            onClick={() => {
+                                                deletePost({ id: post.id });
+                                            }}
+                                        />
+                                    </HStack>
+                                ) : null}
                             </Flex>
                         );
                     })}
