@@ -85,7 +85,7 @@ export const createUrqlClient = (ssrExchange: any, ctx: any): ClientOptions => {
     }
 
     return {
-        url: "http://localhost:4001/graphql",
+        url: process.env.NEXT_PUBLIC_API_URL as string,
         fetchOptions: {
             credentials: "include" as const,
             headers: cookie ? { cookie } : undefined,

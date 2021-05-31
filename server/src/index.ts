@@ -57,8 +57,7 @@ const main = async () => {
                 secure: __prod__, // cookie only works in https
                 sameSite: "lax", // csrf
                 // we might run into SSR issues if we don't set this
-                // TODO: update to our custom domain
-                domain: __prod__ ? ".codeponder.com" : undefined,
+                domain: __prod__ ? ".mikeplis.com" : undefined,
             },
             saveUninitialized: false,
             secret: process.env.SESSION_SECRET,
