@@ -1,4 +1,5 @@
 import "reflect-metadata";
+import "dotenv-safe/config";
 import { COOKIE_NAME, __prod__ } from "./constants";
 import express from "express";
 import { ApolloServer } from "apollo-server-express";
@@ -18,12 +19,10 @@ import { createUpvoteLoader } from "./utils/createUpvoteLoader";
 
 const main = async () => {
     const conn = await createConnection({
+        url: process.env.DATABASE_URL,
         type: "postgres",
-        database: "lireddit2",
-        username: "postgres",
-        password: "postgres",
         logging: true,
-        synchronize: true,
+        // synchronize: true,
         migrations: [path.join(__dirname, "./migrations/*")],
         entities: [path.join(__dirname, "./entities/*")],
     });
@@ -33,14 +32,17 @@ const main = async () => {
     const app = express();
 
     const RedisStore = connectRedis(session);
-    const redis = new Redis();
+    const redis = new Redis(process.env.REDIS_URL);
+
+    // tell express to trust our nginx proxy
+    app.set("trust proxy", 1);
 
     app.use(
         cors({
             // need to explicitly set origin since we want to send credentials
             // with our requests and we can't do that with a wildcard (*) origin,
             // which is apollo's default
-            origin: "http://localhost:3001",
+            origin: process.env.CORS_ORIGIN,
             credentials: true,
         })
     );
@@ -54,10 +56,12 @@ const main = async () => {
                 httpOnly: true,
                 secure: __prod__, // cookie only works in https
                 sameSite: "lax", // csrf
+                // we might run into SSR issues if we don't set this
+                // TODO: update to our custom domain
+                domain: __prod__ ? ".codeponder.com" : undefined,
             },
             saveUninitialized: false,
-            // TODO: put this in .env
-            secret: "afwufhkjawehfawe",
+            secret: process.env.SESSION_SECRET,
             resave: false,
         })
     );
@@ -88,8 +92,8 @@ const main = async () => {
         cors: false,
     });
 
-    app.listen(4001, () => {
-        console.log("server started on localhost:4001");
+    app.listen(parseInt(process.env.PORT), () => {
+        console.log(`server started on localhost:${process.env.PORT}`);
     });
 };
 

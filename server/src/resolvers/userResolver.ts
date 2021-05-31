@@ -107,6 +107,7 @@ export class UserResolver {
         await sendEmail(
             email,
             // need to include token in URL so we can validate who they are
+            // TODO: this would need to be updated if we wanted it to work in production
             `<a href="http://localhost:3001/change-password/${token}">Reset password</a>`
         );
         return true;
