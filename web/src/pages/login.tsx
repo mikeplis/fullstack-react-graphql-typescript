@@ -1,25 +1,23 @@
-import { Stack, Button, Link } from "@chakra-ui/react";
+import { Button, Link, Stack } from "@chakra-ui/react";
 import { Form, Formik } from "formik";
-import { withUrqlClient } from "next-urql";
+import NextLink from "next/link";
 import { useRouter } from "next/router";
 import React from "react";
 import { InputField } from "../components/InputField";
 import { Wrapper } from "../components/Wrapper";
 import { useLoginMutation } from "../generated/graphql";
-import { createUrqlClient } from "../utils/createUrqlClient";
 import { toErrorMap } from "../utils/toErrorMap";
-import NextLink from "next/link";
 
 // TODO: replace with react-hook-form
 const Login = () => {
     const router = useRouter();
-    const [, login] = useLoginMutation();
+    const [login] = useLoginMutation();
     return (
         <Wrapper>
             <Formik
                 initialValues={{ usernameOrEmail: "", password: "" }}
                 onSubmit={async (values, { setErrors }) => {
-                    const response = await login(values);
+                    const response = await login({ variables: values });
                     if (response.data?.login.errors) {
                         setErrors(toErrorMap(response.data.login.errors));
                     } else if (response.data?.login.user) {
@@ -62,4 +60,4 @@ const Login = () => {
     );
 };
 
-export default withUrqlClient(createUrqlClient)(Login);
+export default Login;

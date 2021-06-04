@@ -18,6 +18,7 @@ import { createUserLoader } from "./utils/createUserLoader";
 import { createUpvoteLoader } from "./utils/createUpvoteLoader";
 
 const main = async () => {
+    // @ts-expect-error
     const conn = await createConnection({
         url: process.env.DATABASE_URL,
         type: "postgres",
@@ -27,7 +28,7 @@ const main = async () => {
         entities: [path.join(__dirname, "./entities/*")],
     });
 
-    await conn.runMigrations();
+    // await conn.runMigrations();
 
     const app = express();
 

@@ -1,6 +1,5 @@
 import { ChevronDownIcon, ChevronUpIcon, DeleteIcon, EditIcon } from "@chakra-ui/icons";
-import { Box, Link, Text, Stack, Button, IconButton, HStack, Flex } from "@chakra-ui/react";
-import { withUrqlClient } from "next-urql";
+import { Box, Button, Flex, HStack, IconButton, Link, Stack, Text } from "@chakra-ui/react";
 import NextLink from "next/link";
 import React from "react";
 import { Layout } from "../components/Layout";
@@ -10,26 +9,27 @@ import {
     usePostsQuery,
     useVoteMutation,
 } from "../generated/graphql";
-import { createUrqlClient } from "../utils/createUrqlClient";
 
 const Index = () => {
-    const [variables, setVariables] = React.useState<{ limit: number; cursor: null | string }>({
-        limit: 15,
-        cursor: null,
+    const { data, loading, fetchMore, variables } = usePostsQuery({
+        variables: {
+            limit: 15,
+            cursor: null,
+        },
+        notifyOnNetworkStatusChange: true,
     });
-    const [{ data, fetching }] = usePostsQuery({ variables });
-    const [{ data: meData }] = useMeQuery();
-    const [, vote] = useVoteMutation();
-    const [, deletePost] = useDeletePostMutation();
+    const { data: meData } = useMeQuery();
+    const [vote] = useVoteMutation();
+    const [deletePost] = useDeletePostMutation();
 
     // TODO: some kind of abstraction to handle loading/empty/etc states (like RedwoodJS)
-    if (!fetching && !data) {
+    if (!loading && !data) {
         return <Box>No data</Box>;
     }
 
     return (
         <Layout>
-            {!data && fetching ? (
+            {!data && loading ? (
                 <Box>Loading...</Box>
             ) : (
                 <Stack>
@@ -53,7 +53,9 @@ const Index = () => {
                                             icon={<ChevronUpIcon />}
                                             onClick={() => {
                                                 if (post.voteStatus !== 1) {
-                                                    vote({ postId: post.id, value: 1 });
+                                                    vote({
+                                                        variables: { postId: post.id, value: 1 },
+                                                    });
                                                 }
                                             }}
                                             colorScheme={
@@ -67,7 +69,9 @@ const Index = () => {
                                             icon={<ChevronDownIcon />}
                                             onClick={() => {
                                                 if (post.voteStatus !== -1) {
-                                                    vote({ postId: post.id, value: -1 });
+                                                    vote({
+                                                        variables: { postId: post.id, value: -1 },
+                                                    });
                                                 }
                                             }}
                                             colorScheme={post.voteStatus === -1 ? "red" : undefined}
@@ -96,7 +100,7 @@ const Index = () => {
                                             aria-label="delete post"
                                             icon={<DeleteIcon />}
                                             onClick={() => {
-                                                deletePost({ id: post.id });
+                                                deletePost({ variables: { id: post.id } });
                                             }}
                                         />
                                     </HStack>
@@ -106,13 +110,33 @@ const Index = () => {
                     })}
                     {data?.posts.hasMore ? (
                         <Button
+                            isLoading={loading}
                             onClick={() =>
-                                setVariables((prevVariables) => ({
-                                    limit: prevVariables.limit,
-                                    cursor:
-                                        data?.posts.posts[data?.posts.posts.length - 1].createdAt ??
-                                        null,
-                                }))
+                                fetchMore({
+                                    variables: {
+                                        limit: variables?.limit || 15,
+                                        cursor:
+                                            data?.posts.posts[data?.posts.posts.length - 1]
+                                                .createdAt ?? null,
+                                    },
+                                    // updateQuery: (previousValue, { fetchMoreResult }) => {
+                                    //     if (!fetchMoreResult) {
+                                    //         return previousValue;
+                                    //     }
+
+                                    //     return {
+                                    //         __typename: "Query",
+                                    //         posts: {
+                                    //             __typename: "PaginatedPosts",
+                                    //             hasMore: fetchMoreResult.posts.hasMore,
+                                    //             posts: [
+                                    //                 ...previousValue.posts.posts,
+                                    //                 ...fetchMoreResult.posts.posts,
+                                    //             ],
+                                    //         },
+                                    //     };
+                                    // },
+                                })
                             }
                         >
                             Load more
@@ -124,4 +148,4 @@ const Index = () => {
     );
 };
 
-export default withUrqlClient(createUrqlClient, { ssr: true })(Index);
+export default Index;

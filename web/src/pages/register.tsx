@@ -1,25 +1,23 @@
-import { Stack, Button } from "@chakra-ui/react";
+import { Button, Stack } from "@chakra-ui/react";
 import { Form, Formik } from "formik";
-import { withUrqlClient } from "next-urql";
 import { useRouter } from "next/router";
 import React from "react";
 import { InputField } from "../components/InputField";
 import { Wrapper } from "../components/Wrapper";
 import { useRegisterMutation } from "../generated/graphql";
-import { createUrqlClient } from "../utils/createUrqlClient";
 import { toErrorMap } from "../utils/toErrorMap";
 
 // TODO: replace with react-hook-form
 const Register = () => {
     const router = useRouter();
-    const [, register] = useRegisterMutation();
+    const [register] = useRegisterMutation();
     return (
         <Wrapper>
             <Formik
                 initialValues={{ username: "", password: "", email: "" }}
                 onSubmit={async (values, { setErrors }) => {
                     const response = await register({
-                        options: values,
+                        variables: { options: values },
                     });
                     if (response.data?.register.errors) {
                         setErrors(toErrorMap(response.data.register.errors));
@@ -52,4 +50,4 @@ const Register = () => {
     );
 };
 
-export default withUrqlClient(createUrqlClient)(Register);
+export default Register;
