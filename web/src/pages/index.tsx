@@ -9,6 +9,7 @@ import {
     usePostsQuery,
     useVoteMutation,
 } from "../generated/graphql";
+import { withApollo } from "../utils/withApollo";
 
 const Index = () => {
     const { data, loading, fetchMore, variables } = usePostsQuery({
@@ -148,4 +149,4 @@ const Index = () => {
     );
 };
 
-export default Index;
+export default withApollo({ ssr: true })(Index);

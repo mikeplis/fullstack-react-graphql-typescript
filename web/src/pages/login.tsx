@@ -7,6 +7,7 @@ import { InputField } from "../components/InputField";
 import { Wrapper } from "../components/Wrapper";
 import { useLoginMutation } from "../generated/graphql";
 import { toErrorMap } from "../utils/toErrorMap";
+import { withApollo } from "../utils/withApollo";
 
 // TODO: replace with react-hook-form
 const Login = () => {
@@ -60,4 +61,4 @@ const Login = () => {
     );
 };
 
-export default Login;
+export default withApollo({ ssr: false })(Login);

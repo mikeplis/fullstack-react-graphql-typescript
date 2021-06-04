@@ -6,6 +6,7 @@ import { InputField } from "../components/InputField";
 import { Wrapper } from "../components/Wrapper";
 import { useRegisterMutation } from "../generated/graphql";
 import { toErrorMap } from "../utils/toErrorMap";
+import { withApollo } from "../utils/withApollo";
 
 // TODO: replace with react-hook-form
 const Register = () => {
@@ -50,4 +51,4 @@ const Register = () => {
     );
 };
 
-export default Register;
+export default withApollo({ ssr: false })(Register);
